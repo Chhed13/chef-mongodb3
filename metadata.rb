@@ -8,7 +8,7 @@ version          '2.0.0'
 
 supports 'ubuntu', '= 12.04'
 supports 'redhat', '= 6.6'
-supports 'centos', '= 6.6'
+supports 'centos', '>= 6.6'
 supports 'oracle', '= 6.6'
 
 depends 'apt'

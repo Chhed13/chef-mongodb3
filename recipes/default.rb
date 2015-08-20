@@ -67,10 +67,44 @@ template node['mongodb3']['mongod']['config_file'] do
   helpers Mongodb3Helper
 end
 
+#special init script for CentOS7
+#https://jira.mongodb.org/browse/SERVER-18439
+need_rhel7_fix = platform_family?('rhel') && node['platform_version'].to_i >= 7
+#check fix version? node['mongodb3']['version'] < "3.1"
+template "/etc/init.d/mongod" do
+  source "mongod.init.erb"
+  owner "root"
+  group "root"
+  mode 0755
+  variables(
+      :skip_redirect => true,
+      :pid_file      => node['mongodb3']['config']['mongod']['processManagement']['pidFilePath'],
+      :config_file   => node['mongodb3']['mongod']['config_file'],
+      :user          => node['mongodb3']['user'],
+      :group         => node['mongodb3']['group'],
+      :ulimit        => {:fsize => 'unlimited',# file_size
+                         :cpu => 'unlimited', # cpu_time
+                         :as => 'unlimited', # virtual memory
+                         :nofile => 64_000, # number_files
+                         :rss => 'unlimited', # memory_size
+                         :nproc => 64_000 } # processes
+  )
+  notifies :run, 'execute[mongodb-systemctl-daemon-reload]', :immediately
+  only_if { need_rhel7_fix }
+end
+
+# Reload systemctl for RHEL 7+ after modifying the init file.
+execute 'mongodb-systemctl-daemon-reload' do
+  command 'systemctl daemon-reload'
+  action :nothing
+end
+
 # Start the mongod service
 service 'mongod' do
   supports :start => true, :stop => true, :restart => true, :status => true
+  provider Chef::Provider::Service::Init::Redhat if need_rhel7_fix
   action :enable
   subscribes :restart, "template[#{node['mongodb3']['mongod']['config_file']}]", :delayed
   subscribes :restart, "template[#{node['mongodb3']['config']['mongod']['security']['keyFile']}", :delayed
+  subscribes :restart, "template[/etc/init.d/mongod]", :delayed
 end
