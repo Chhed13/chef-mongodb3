@@ -37,13 +37,18 @@ install_package.each do |pkg|
   end
 end
 
-# Create the db path if not exist.
-directory node['mongodb3']['config']['mongod']['storage']['dbPath'] do
-  owner node['mongodb3']['user']
-  group node['mongodb3']['group']
-  mode '0755'
-  action :create
-  recursive true
+# Create the paths if not exist.
+[node['mongodb3']['config']['mongod']['storage']['dbPath'],
+ File.dirname(node['mongodb3']['config']['mongod']['systemLog']['path']),
+ File.dirname(node['mongodb3']['mongod']['config_file']),
+ File.dirname(node['mongodb3']['config']['mongod']['processManagement']['pidFilePath'])].each do |path|
+  directory path do
+    owner node['mongodb3']['user']
+    group node['mongodb3']['group']
+    mode '0755'
+    action :create
+    recursive true
+  end if path
 end
 
 unless node['mongodb3']['config']['key_file_content'].to_s.empty?
