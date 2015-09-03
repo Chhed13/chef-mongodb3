@@ -107,7 +107,6 @@ end
 # Start the mongod service
 service 'mongod' do
   supports :start => true, :stop => true, :restart => true, :status => true
-  provider Chef::Provider::Service::Init::Redhat if need_rhel7_fix
   action :enable
   subscribes :restart, "template[#{node['mongodb3']['mongod']['config_file']}]", :delayed
   subscribes :restart, "template[#{node['mongodb3']['config']['mongod']['security']['keyFile']}", :delayed

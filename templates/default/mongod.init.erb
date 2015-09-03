@@ -1,9 +1,4 @@
-<%if @skip_redirect %>
-#workaround for Centos7: https://jira.mongodb.org/browse/SERVER-18439
-SYSTEMCTL_SKIP_REDIRECT=1
-<%end%>
 #!/bin/bash
-
 # mongod - Startup script for mongod
 
 # chkconfig: 35 85 15
@@ -19,6 +14,10 @@ SYSTEMCTL_SKIP_REDIRECT=1
 
 # NOTE: if you change any OPTIONS here, you get what you pay for:
 # this script assumes all options are in the config file.
+<%if @skip_redirect %>
+#workaround for Centos7: https://jira.mongodb.org/browse/SERVER-18439
+SYSTEMCTL_SKIP_REDIRECT=1
+<%end%>
 CONFIGFILE="<%= @config_file %>"
 OPTIONS=" -f $CONFIGFILE"
 SYSCONFIG="/etc/sysconfig/mongod"
@@ -27,8 +26,8 @@ PIDFILEPATH=`awk -F'[:=]' -v IGNORECASE=1 '/^[[:blank:]]*(processManagement\.)?p
 
 mongod=${MONGOD-/usr/bin/mongod}
 
-MONGO_USER= <%= @user %>
-MONGO_GROUP= <%= @group %>
+MONGO_USER="<%= @user %>"
+MONGO_GROUP="<%= @group %>"
 
 if [ -f "$SYSCONFIG" ]; then
     . "$SYSCONFIG"
