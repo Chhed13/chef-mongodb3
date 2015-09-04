@@ -73,26 +73,25 @@ template node['mongodb3']['mongod']['config_file'] do
 end
 
 #special init script for CentOS7
-#https://jira.mongodb.org/browse/SERVER-18439
 need_rhel7_fix = platform_family?('rhel') && node['platform_version'].to_i >= 7
-#check fix version? node['mongodb3']['version'] < "3.1"
+#Set Ulimits for CentOS7
+cookbook_file '/etc/security/limits.d/99-mongodb-nproc.conf' do
+  source "99-mongodb-nproc.conf"
+  mode 0644
+  only_if { need_rhel7_fix }
+end
+#https://jira.mongodb.org/browse/SERVER-18439
 template "/etc/init.d/mongod" do
   source "mongod.init.erb"
   owner "root"
   group "root"
   mode 0755
   variables(
-      :skip_redirect => true,
+      :skip_redirect => false,
       :pid_file      => node['mongodb3']['config']['mongod']['processManagement']['pidFilePath'],
       :config_file   => node['mongodb3']['mongod']['config_file'],
       :user          => node['mongodb3']['user'],
-      :group         => node['mongodb3']['group'],
-      :ulimit        => {:fsize => 'unlimited',# file_size
-                         :cpu => 'unlimited', # cpu_time
-                         :as => 'unlimited', # virtual memory
-                         :nofile => 64_000, # number_files
-                         :rss => 'unlimited', # memory_size
-                         :nproc => 64_000 } # processes
+      :group         => node['mongodb3']['group']
   )
   notifies :run, 'execute[mongodb-systemctl-daemon-reload]', :immediately
   only_if { need_rhel7_fix }
