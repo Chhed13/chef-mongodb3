@@ -87,7 +87,7 @@ template "/etc/init.d/mongod" do
   group "root"
   mode 0755
   variables(
-      :skip_redirect => false,
+      :skip_redirect => true,
       :pid_file      => node['mongodb3']['config']['mongod']['processManagement']['pidFilePath'],
       :config_file   => node['mongodb3']['mongod']['config_file'],
       :user          => node['mongodb3']['user'],
